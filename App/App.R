@@ -3,9 +3,11 @@ library(tidyr)
 library(dplyr)
 library(shinyWidgets)
 
+
+
 ui <- fluidPage(
   
-  titlePanel("Linear Approximations of real-valued functions on real line"),
+  titlePanel("Taylor Series Approximations of real-valued functions on real line"),
   sidebarLayout(
     position = "left",
     sidebarPanel(
@@ -13,7 +15,8 @@ ui <- fluidPage(
                       choices = seq(-10,10, by = 1),
                       selected = c(-5,5)),
       textInput(inputId = "fct", label = "Enter function"),
-      numericInput(inputId = "at", label = "Approximation at", value = 0, step = 0.1)
+      numericInput(inputId = "at", label = "Approximation at", value = 0, step = 0.1),
+      numericInput(inputId = "n", label = "Degree of approximation", value = 1, step = 1)
     ),
     mainPanel(
     
@@ -23,25 +26,32 @@ ui <- fluidPage(
   )
 )
 
-     
-
 server <- function(input, output, session) {
   
     output$plot <- renderPlot({
-      
-      function_expression <- parse(text = input$fct)
-      
+    
       fun <- function(x) { eval(parse(text = input$fct)) }
-      dfun <- function(x) { eval(D(parse(text = input$fct), "x"))}
-      linearization <- function(x) { 
-        fa <- fun(input$at)
-        dfa <- dfun(input$at)
-        fa + dfa * (x - input$at)
+      dfun <- function(x, func, N) { 
+        derivative <- D(parse(text = func), "x")
+         if(N > 1) {
+           for(n in 1:(N-1)) {
+           derivative <- D(derivative, "x")
+           }
+         }
+         eval(derivative)
+         }
+      approximation <- function(x, N) { 
+      terms = 0
+        for(n in 1:N) {
+        terms <- terms + dfun(input$at, input$fct, n) / factorial(n) * (x - input$at)^n 
+        }  
+      
+      fun(input$at) + terms 
       }
         
       df <- data.frame(x = seq(input$xaxis[1],input$xaxis[2],by = 0.01))
       df <- df %>% mutate(y =  fun(x),
-                          L = linearization(x)) %>%
+                          L = approximation(x, input$n)) %>%
         gather(value_type, value, c("y","L"))
       
       ggplot(df, aes(x = x, y = value, col = value_type)) +
