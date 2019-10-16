@@ -57,7 +57,10 @@ server <- function(input, output, session) {
       ggplot(df, aes(x = x, y = value, col = value_type)) +
         geom_hline(yintercept = 0) +
         geom_vline(xintercept = 0) +
-        geom_line()
+        geom_line(size = 1.5) +
+        theme_light() +
+        labs(col = NULL, x = NULL, y = NULL) +
+        scale_x_continuous(breaks = input$xaxis[1]:input$xaxis[2]) 
     })
 }
  
